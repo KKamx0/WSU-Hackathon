@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Facebook Privacy Score</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <h1>Check Your Facebook Privacy Score</h1>
+
+  <!-- Facebook Login Button -->
+  <fb:login-button 
+    scope="public_profile,email"
+    onlogin="checkLoginState();">
+  </fb:login-button>
+
+  <div id="status"></div>
+
+  <!-- Facebook SDK -->
+  <script>
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '4241036002877127',
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v19.0'
+      });
+
+      FB.getLoginStatus(function(response) {
+        statusChangeCallback(response);
+      });
+    };
+
+    (function(d, s, id){
+       var js, fjs = d.getElementsByTagName(s)[0];
+       if (d.getElementById(id)) {return;}
+       js = d.createElement(s); js.id = id;
+       js.src = "https://connect.facebook.net/en_US/sdk.js";
+       fjs.parentNode.insertBefore(js, fjs);
+     }(document, 'script', 'facebook-jssdk'));
+
+    // function statusChangeCallback(response) {
+    //   if (response.status === 'connected') {
+    //     FB.api('/me?fields=name,email', function(response) {
+    //       document.getElementById('status').innerHTML =
+    //         'Thanks for logging in, ' + response.name + '!';
+    //     });
+    //   } else {
+    //     document.getElementById('status').innerHTML = 'Please log into Facebook.';
+    //   }
+    // }
+    function statusChangeCallback(response) {
+    if (response.status === 'connected') {
+        FB.api('/me?fields=name,email', function(userData) {
+        document.getElementById('status').innerHTML =
+            'Thanks for logging in, ' + userData.name + '!';
+
+        // Send data to Flask
+        fetch('/fbScore', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+            name: userData.name,
+            email: userData.email
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('status').innerHTML +=
+            `<p>Your Privacy Score: ${data.score}/100</p>
+            <h3>Tips to Improve:</h3>
+            <ul>${data.tips.map(tip => `<li>${tip}</li>`).join('')}</ul>`;
+        });
+        });
+    } else {
+        document.getElementById('status').innerHTML = 'Please log into Facebook.';
+    }
+    }
+
+    function checkLoginState() {
+      FB.getLoginStatus(function(response) {
+        statusChangeCallback(response);
+      });
+    }
+  </script>
+</body>
+</html>
