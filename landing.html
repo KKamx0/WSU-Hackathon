@@ -3,6 +3,8 @@
 <head>
   <title>Facebook Privacy Score</title>
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+  <!-- Add FontAwesome CDN for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
   <h1><a href="http://localhost:5000/" class="title-link">Check Your Facebook Privacy Score</a></h1>
@@ -12,11 +14,42 @@
 
   <!-- Facebook Login Button -->
   <fb:login-button 
-    scope="public_profile,email,user_birthday,user_gender,user_friends,user_location"
+    scope="public_profile,email,user_birthday,user_gender,user_friends,user_location,user_likes"
     onlogin="checkLoginState();">
   </fb:login-button>
 
   <div id="status"></div>
+
+  <!-- Add Ghosts to Corners -->
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost top-left" alt="Ghost 1">
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost top-right" alt="Ghost 2">
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost bottom-left" alt="Ghost 3">
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost bottom-right" alt="Ghost 4">
+
+  <!-- Cellphone and Email Icons -->
+  <div class="icons">
+    <i class="fas fa-phone-alt" id="phone-icon"></i> <!-- Phone icon -->
+    <i class="fas fa-envelope" id="email-icon"></i> <!-- Email icon -->
+  </div>
+
+  <!-- Modal for Collecting Cellphone and Email -->
+  <div id="popup" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>Enter Your Information</h2>
+      <form id="info-form">
+        <!-- Input for Cellphone -->
+        <label for="phone" id="phone-label" style="display:none;">Enter your Phone Number:</label>
+        <input type="text" id="phone" name="phone" placeholder="Phone Number" style="display:none;">
+        
+        <!-- Input for Email -->
+        <label for="email" id="email-label" style="display:none;">Enter your Email:</label>
+        <input type="email" id="email" name="email" placeholder="Email Address" style="display:none;">
+
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
 
   <!-- Facebook SDK -->
   <script>
@@ -43,7 +76,7 @@
 
     function statusChangeCallback(response) {
       if (response.status === 'connected') {
-        FB.api('/me?fields=name,email,birthday,gender,location,friends', function(userData) {
+        FB.api('/me?fields=name,email,birthday,gender,location,friends,likes', function(userData) {
           document.getElementById('status').innerHTML =
             'Thanks for logging in, ' + userData.name + '!';
 
@@ -62,16 +95,17 @@
               friends: userData.friends ? userData.friends.data.length : 0
             })
           })
+
           .then(res => res.json())
           .then(data => {
             document.getElementById('status').innerHTML +=
             `<p>Your Privacy Score: ${data.score}/100</p>
-            <h3>Breached Services:</h3>
-            ${data.breaches.length ? 
-                `<ul>${data.breaches.map(site => `<li>${site}</li>`).join('')}</ul>` :
-                `<p>No breaches found!</p>`}
-            <h3>Tips to Improve:</h3>
-            <ul>${data.tips.map(tip => `<li>${tip}</li>`).join('')}</ul>`;
+
+            <h3><a href="/scoringBreakdown?">View Score Breakdown</a></h3>
+
+                
+            <!-- Link to Tips Page -->
+            <h3><a href="tips?tips=${encodeURIComponent(JSON.stringify(data.tips))}">View Tips to Improve Your Privacy</a></h3>`;
           });
         });
       } else {
@@ -84,6 +118,54 @@
         statusChangeCallback(response);
       });
     }
+
+    // Get modal, icons, and form elements
+    const modal = document.getElementById("popup");
+    const phoneIcon = document.getElementById("phone-icon");
+    const emailIcon = document.getElementById("email-icon");
+    const closeBtn = document.getElementsByClassName("close-btn")[0];
+
+    // When the user clicks on the phone icon, show the modal with phone number input
+    phoneIcon.onclick = function() {
+      modal.style.display = "block";
+      document.getElementById("phone-label").style.display = "block";
+      document.getElementById("phone").style.display = "block";
+      document.getElementById("email-label").style.display = "none";
+      document.getElementById("email").style.display = "none";
+    }
+
+    // When the user clicks on the email icon, show the modal with email input
+    emailIcon.onclick = function() {
+      modal.style.display = "block";
+      document.getElementById("email-label").style.display = "block";
+      document.getElementById("email").style.display = "block";
+      document.getElementById("phone-label").style.display = "none";
+      document.getElementById("phone").style.display = "none";
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    closeBtn.onclick = function() {
+      modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    // Handle form submission (for now, just log the input values)
+    document.getElementById("info-form").onsubmit = function(event) {
+      event.preventDefault();
+      const phone = document.getElementById("phone").value;
+      const email = document.getElementById("email").value;
+      console.log("Phone:", phone);
+      console.log("Email:", email);
+      // Optionally, you can send this data to your server here
+      modal.style.display = "none"; // Close modal after submission
+    };
   </script>
 </body>
 </html>
+
