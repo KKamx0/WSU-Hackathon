@@ -5,11 +5,14 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <h1>Check Your Facebook Privacy Score</h1>
+  <h1><a href="http://localhost:5000/" class="title-link">Check Your Facebook Privacy Score</a></h1>
+
+  <!-- Terms of Notice -->
+  <p><strong>Terms of Notice:</strong> By logging in with your Facebook account, you agree to share your personal information with us, including but not limited to your name, email, birthday, gender, location, and the number of your friends. This information will be used solely to calculate your Facebook privacy score and provide privacy-related recommendations. Your data will not be stored or shared beyond this purpose.</p>
 
   <!-- Facebook Login Button -->
   <fb:login-button 
-    scope="public_profile,email"
+    scope="public_profile,email,user_birthday,user_gender,user_friends,user_location"
     onlogin="checkLoginState();">
   </fb:login-button>
 
@@ -19,10 +22,10 @@
   <script>
     window.fbAsyncInit = function() {
       FB.init({
-        appId      : '4241036002877127',
-        cookie     : true,
-        xfbml      : true,
-        version    : 'v19.0'
+        appId: '4241036002877127',
+        cookie: true,
+        xfbml: true,
+        version: 'v19.0'
       });
 
       FB.getLoginStatus(function(response) {
@@ -38,44 +41,42 @@
        fjs.parentNode.insertBefore(js, fjs);
      }(document, 'script', 'facebook-jssdk'));
 
-    // function statusChangeCallback(response) {
-    //   if (response.status === 'connected') {
-    //     FB.api('/me?fields=name,email', function(response) {
-    //       document.getElementById('status').innerHTML =
-    //         'Thanks for logging in, ' + response.name + '!';
-    //     });
-    //   } else {
-    //     document.getElementById('status').innerHTML = 'Please log into Facebook.';
-    //   }
-    // }
     function statusChangeCallback(response) {
-    if (response.status === 'connected') {
-        FB.api('/me?fields=name,email', function(userData) {
-        document.getElementById('status').innerHTML =
+      if (response.status === 'connected') {
+        FB.api('/me?fields=name,email,birthday,gender,location,friends', function(userData) {
+          document.getElementById('status').innerHTML =
             'Thanks for logging in, ' + userData.name + '!';
 
-        // Send data to Flask
-        fetch('/fbScore', {
+          // Send data to Flask
+          fetch('/fbScore', {
             method: 'POST',
             headers: {
-            'Content-Type': 'application/json'
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-            name: userData.name,
-            email: userData.email
+              name: userData.name,
+              email: userData.email,
+              birthday: userData.birthday,
+              gender: userData.gender,
+              location: userData.location ? userData.location.name : "Not provided",
+              friends: userData.friends ? userData.friends.data.length : 0
             })
-        })
-        .then(res => res.json())
-        .then(data => {
+          })
+          .then(res => res.json())
+          .then(data => {
             document.getElementById('status').innerHTML +=
             `<p>Your Privacy Score: ${data.score}/100</p>
+            <h3>Breached Services:</h3>
+            ${data.breaches.length ? 
+                `<ul>${data.breaches.map(site => `<li>${site}</li>`).join('')}</ul>` :
+                `<p>No breaches found!</p>`}
             <h3>Tips to Improve:</h3>
             <ul>${data.tips.map(tip => `<li>${tip}</li>`).join('')}</ul>`;
+          });
         });
-        });
-    } else {
-        document.getElementById('status').innerHTML = 'Please log into Facebook.';
-    }
+      } else {
+        document.getElementById('status').innerHTML = 'Please log into Facebook to view your privacy score.';
+      }
     }
 
     function checkLoginState() {
