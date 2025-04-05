@@ -17,7 +17,7 @@ class SocialCheck:
     def get_auth_url(self):
         return (
             f"https://www.facebook.com/v12.0/dialog/oauth?"
-            f"client_id={self.app_id}&redirect_uri={self.redirect_uri}&scope=email,public_profile"
+            f"client_id={self.app_id}&redirect_uri={self.redirect_uri}&scope=email,public_profile,user_birthday,user_location,user_gender,user_friends"
         )
 
     def get_access_token(self, code):
@@ -30,7 +30,11 @@ class SocialCheck:
         return response.json().get('access_token')
 
     def get_user_data(self, access_token):
-        user_data_url = f"https://graph.facebook.com/me?fields=id,name,email&access_token={access_token}"
+        user_data_url = (
+            "https://graph.facebook.com/me?"
+            "fields=id,name,email,birthday,location,about,gender,locale,friends"
+            f"&access_token={access_token}"
+        )
         response = requests.get(user_data_url)
         return response.json()
 
@@ -40,11 +44,6 @@ APP_SECRET = '037ca72eb25dd1c8c73fb7465826fe6a'  # Replace with your Facebook Ap
 
 # Initialize the SocialCheck class
 social_check = SocialCheck(APP_ID, APP_SECRET)
-
-# Route for the landing page (button or form)
-@app.route('/')
-def landingPage():
-    return render_template('index.html')  # Add your HTML form to submit username for privacy score
 
 # Route for the Facebook login
 @app.route('/login')
