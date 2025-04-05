@@ -1,5 +1,5 @@
 # Handles the logic to fetch public GitHub profile data via GitHub API.
-# Input: GitHub username Output: public email, location, etc.
+# Input: Faceboook username Output: public email, location, etc.
 # type: ignore
   # from Flask package
 from flask import Flask, render_template, request, redirect  # type: ignore 
@@ -63,7 +63,13 @@ def callback():
         return "Failed to get access token"
 
     user_data = social_check.get_user_data(access_token)
-    return f"<h2>Facebook User Data:</h2><pre>{user_data}</pre>"
+
+
+    # Pass data to the template for rendering
+    return render_template('user_data.html', user_data=user_data, score=score, tips=tips)
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True)  # Run the Flask app in debug mode
+# # Note: Make sure to replace the placeholder values for APP_ID and APP_SECRET with your actual Facebook App credentials.
+# # Also, ensure you have the necessary permissions set up in your Facebook App settings.
