@@ -14,17 +14,17 @@
 
   <!-- Facebook Login Button -->
   <fb:login-button 
-    scope="public_profile,email,user_birthday,user_gender,user_friends,user_location,user_likes"
-    onlogin="checkLoginState();">
+  scope="public_profile,email,user_birthday,user_gender,user_friends,user_location,user_likes,"
+  onlogin="checkLoginState();">
   </fb:login-button>
 
   <div id="status"></div>
-
+  
   <!-- Add Ghosts to Corners -->
-  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost top-left" alt="Ghost 1">
-  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost top-right" alt="Ghost 2">
-  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost bottom-left" alt="Ghost 3">
-  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost bottom-right" alt="Ghost 4">
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827038.png" class="corner-ghost top-left" alt="Money">
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827024.png" class="corner-ghost top-right" alt="Warning">
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827043.png" class="corner-ghost bottom-left" alt="Password">
+  <img src="https://cdn-icons-png.flaticon.com/512/10827/10827018.png" class="corner-ghost bottom-right" alt="ID">
 
   <!-- Cellphone and Email Icons -->
   <div class="icons">
@@ -92,16 +92,16 @@
               birthday: userData.birthday,
               gender: userData.gender,
               location: userData.location ? userData.location.name : "Not provided",
-              friends: userData.friends ? userData.friends.data.length : 0
+              friends: userData.friends ? userData.friends.data.length : 0,
+              likes: userData.likes ? userData.likes.data : []
             })
           })
-
           .then(res => res.json())
           .then(data => {
             document.getElementById('status').innerHTML +=
-            `<p>Your Privacy Score: ${data.score}/100</p>
-
-            <h3><a href="/scoringBreakdown?">View Score Breakdown</a></h3>
+            `<p>Privacy Score: ${data.score}/100</p>
+       
+            <h3><a href="/scoreBreakdown?score=${data.score}">View Score Breakdown</a></h3>
 
                 
             <!-- Link to Tips Page -->
@@ -168,4 +168,3 @@
   </script>
 </body>
 </html>
-
