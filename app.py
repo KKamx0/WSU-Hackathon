@@ -1,37 +1,93 @@
-# Main Flask app file  handles routing, user input, and rendering templates.
-# This is where everything connects: form submission, API checks, scoring, and results page.
+# This is the main backend file (app.py) of our privacy-checking web app built with Flask.
+# Main Flask app file handles: Web routing, Receiving Facebook user data (name/email) via JSON, Generating a privacy score, and Returning feedback (privacy tips) as a JSON response
+from hibp_check import check_email_breach 
+from flask import Flask, render_template, request, jsonify # Import necessary modules from Flask
+# Flask: creates the web app
+# render_template: loads HTML pages
+# request: reads incoming data (like JSON from frontend)
+# jsonify: sends structured JSON data back to the frontend
 
-from flask import Flask, render_template, request, jsonify 
+# Initialize the Flask application.
+app = Flask(__name__) 
 
-app = Flask(__name__)
-
-# Home Page – Landing with a button or form
+# Sets up the home page route (/)
 @app.route('/')
 def landingPage():
-    return render_template('index.html')  # A template with a button or form, "Click here to view your facebook privacy score"
+    # Renders an HTML template with a form or Facebook login button
+    return render_template('landing.html') 
 
-# Route to receive form submission and show privacy score
-@app.route('/fbScore', methods=['POST']) # Tips/What to do to increase personal privacy
+# Defines a new POST route /fbScore that receives data from the frontend (via fetch)
+@app.route('/fbScore', methods=['POST'])
 def fbScore():
     data = request.get_json()
+     # Print the JSON data to the console for debugging
+    print("Received JSON data:", data)
+   
     name = data.get('name')
+    first_name = name.split()[0] if name else None
+    last_name = name.split()[1] if name and len(name.split()) > 1 else None
     email = data.get('email')
+    location = data.get('location')
+    birthday = data.get('birthday')
+    month = birthday.split('/')[0] if birthday else None
+    day = birthday.split('/')[1] if birthday else None
+    year = birthday.split('/')[2] if birthday else None
 
-    # Simulated scoring logic
-    score = 100  # You can plug in real logic later
-    tips = [
-        "Change your Facebook password regularly.",
-        "Review app permissions.",
-        "Limit who can see your posts.",
-    ]
+    # Simulate privacy score calculation
+    score = 100
+    tips = ['Personal Tips List: ']  # Initialize tips list
+
+    # Rule 1: Penalize for public email domains
+    if email and any(domain in email for domain in ["gmail.com", "yahoo.com", "hotmail.com"]):
+        score -= 20
+        tips.append("Consider using a more private email service.")
+
+    # Rule 2: Penalize for using name and birthday in email
+    if first_name and first_name.lower() in email.lower():
+        score -= 10
+        tips.append("Avoid using your real first name in your email address.")
+    if last_name and last_name.lower() in email.lower():
+        score -= 10
+        tips.append("Avoid using your real last name in your email address.")
+    if (month in email or day in email or year in email):
+        score -= 10
+        tips.append("Avoid using your birthday in your email address.")
     
-    # Send score and tips back to frontend
+    # Rule 3: Check for data breaches via HaveIBeenPwned
+    breaches = check_email_breach(email)
+    if breaches:
+        score -= len(breaches) * 10
+        tips.append("Your email was found in a data breach. Change your password on those services.")
+    else:
+        tips.append("Your email was not found in any known breaches — great job!")
+
+    # Rule 4: Penalize for public location
+    if location and location.lower() != "not provided":
+        score -= 10
+        tips.append("Consider not sharing your location publicly.")
+
+    # Final tips (always helpful)
+    tips += [
+        ' ',
+        'General Tips: ',
+        "Change your Facebook password regularly.",
+        "Review app permissions and remove unnecessary ones.",
+        "Limit post visibility to 'Friends' or custom groups.",
+        "Use two-factor authentication for added protection."
+    ]
+
+    score = max(0, score)  # Prevent negative score
+
     return jsonify({
         'name': name,
-        'email': email,
         'score': score,
+        'breaches': breaches,
         'tips': tips
     })
 
+
+# Starts the Flask server in debug mode so changes show immediately and errors are logged
 if __name__ == '__main__':
-    app.run(debug=True)
+        app.run(debug=False)
+      # Run the Flask app in debug mode
+    
