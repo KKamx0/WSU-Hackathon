@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Tips</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <h1>Tips to Improve Your Facebook Privacy</h1>
+
+  <div id="tips"></div> <!-- This is where the tips will be shown -->
+
+  <script>
+    // Function to get URL parameters
+    function getURLParameter(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    // Get the 'tips' parameter from the URL (it will be a stringified JSON)
+    const tips = JSON.parse(getURLParameter('tips'));
+
+    // Display the tips dynamically on the page
+    const tipsDiv = document.getElementById('tips');
+    if (tips && tips.length > 0) {
+      let tipsHtml = '<ul>';
+      tips.forEach(tip => {
+        tipsHtml += `<li>${tip}</li>`;
+      });
+      tipsHtml += '</ul>';
+      tipsDiv.innerHTML = tipsHtml;
+    } else {
+      tipsDiv.innerHTML = '<p>No privacy tips available.</p>';
+    }
+  </script>
+
+  <a href="/">Go back to the main page</a> <!-- Option to go back to the main page -->
+</body>
+</html>
